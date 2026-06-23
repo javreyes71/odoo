@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_lote_produccion" model="ir.actions.report">
+        <field name="name">Ficha de Lote de Producción</field>
+        <field name="model">cerveceria.lote</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cerveceria_odoo.report_lote_produccion_doc</field>
+        <field name="report_file">cerveceria_odoo.report_lote_produccion_doc</field>
+        <field name="binding_model_id" ref="model_cerveceria_lote"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_lote_produccion_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="lote">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2 class="text-uppercase">Ficha de Lote de Producción</h2>
+                                <h3 style="color:#5b4a42;">
+                                    <t t-esc="lote.name"/>
+                                    <t t-if="lote.descripcion"> — <t t-esc="lote.descripcion"/></t>
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <table class="table table-sm table-bordered">
+                                    <thead style="background-color:#5b4a42; color:white;">
+                                        <tr><th colspan="2">Información General</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>Nº de Lote</strong></td><td><t t-esc="lote.name"/></td></tr>
+                                        <tr><td><strong>Receta</strong></td><td><t t-esc="lote.receta_id.name"/></td></tr>
+                                        <tr><td><strong>Estilo</strong></td><td><t t-esc="lote.receta_id.estilo_cerveza"/></td></tr>
+                                        <tr><td><strong>Estado</strong></td><td><t t-esc="lote.estado"/></td></tr>
+                                        <tr><td><strong>Maestro Cervecero</strong></td><td><t t-esc="lote.responsable_id.name"/></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm table-bordered">
+                                    <thead style="background-color:#5b4a42; color:white;">
+                                        <tr><th colspan="2">Fechas y Volúmenes</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>Fecha Inicio</strong></td><td><t t-esc="lote.fecha_inicio"/></td></tr>
+                                        <tr><td><strong>Fin Estimado</strong></td><td><t t-esc="lote.fecha_fin_estimada or '—'"/></td></tr>
+                                        <tr><td><strong>Fecha Envasado</strong></td><td><t t-esc="lote.fecha_envasado or '—'"/></td></tr>
+                                        <tr><td><strong>Vol. Planificado</strong></td><td><t t-esc="lote.volumen_planificado"/> L</td></tr>
+                                        <tr><td><strong>Vol. Real</strong></td><td><t t-esc="lote.volumen_real or '—'"/> L</td></tr>
+                                        <tr><td><strong>Rendimiento</strong></td><td><t t-esc="'%.1f' % lote.rendimiento"/>%</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <table class="table table-sm table-bordered">
+                                    <thead style="background-color:#5b4a42; color:white;">
+                                        <tr><th colspan="5">Parámetros Técnicos Reales</th></tr>
+                                        <tr>
+                                            <th>OG Real</th><th>FG Real</th>
+                                            <th>ABV Real (%)</th><th>IBU Real</th>
+                                            <th>Temp. Ferm. (°C)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><t t-esc="lote.densidad_original_real or '—'"/></td>
+                                            <td><t t-esc="lote.densidad_final_real or '—'"/></td>
+                                            <td><t t-esc="'%.2f' % lote.abv_real"/></td>
+                                            <td><t t-esc="lote.ibu_real or '—'"/></td>
+                                            <td><t t-esc="lote.temperatura_fermentacion or '—'"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <t t-if="lote.trazabilidad_ids">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <table class="table table-sm table-bordered">
+                                        <thead style="background-color:#5b4a42; color:white;">
+                                            <tr><th colspan="6">Insumos Utilizados</th></tr>
+                                            <tr>
+                                                <th>Insumo</th><th>Tipo</th><th>Etapa</th>
+                                                <th>Cant. Usada</th><th>Cant. Planificada</th><th>Conforme</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="lote.trazabilidad_ids" t-as="insumo">
+                                                <tr>
+                                                    <td><t t-esc="insumo.product_id.name"/></td>
+                                                    <td><t t-esc="insumo.tipo_insumo"/></td>
+                                                    <td><t t-esc="insumo.etapa_uso"/></td>
+                                                    <td><t t-esc="insumo.cantidad_usada"/> <t t-esc="insumo.uom_id.name"/></td>
+                                                    <td><t t-esc="insumo.cantidad_planificada"/> <t t-esc="insumo.uom_id.name"/></td>
+                                                    <td><t t-if="insumo.conforme">✓ Sí</t><t t-else="">✗ No</t></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="lote.control_calidad_ids">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <table class="table table-sm table-bordered">
+                                        <thead style="background-color:#5b4a42; color:white;">
+                                            <tr><th colspan="6">Controles de Calidad</th></tr>
+                                            <tr>
+                                                <th>Fecha</th><th>Etapa</th><th>Temp. (°C)</th>
+                                                <th>pH</th><th>Densidad</th><th>Resultado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="lote.control_calidad_ids" t-as="ctrl">
+                                                <tr>
+                                                    <td><t t-esc="ctrl.fecha_control"/></td>
+                                                    <td><t t-esc="ctrl.etapa_control"/></td>
+                                                    <td><t t-esc="ctrl.temperatura or '—'"/></td>
+                                                    <td><t t-esc="ctrl.ph or '—'"/></td>
+                                                    <td><t t-esc="ctrl.densidad or '—'"/></td>
+                                                    <td><t t-esc="ctrl.resultado_general"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="lote.notas_produccion">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <h5 style="color:#5b4a42;">Notas de Producción</h5>
+                                    <p><t t-esc="lote.notas_produccion"/></p>
+                                </div>
+                            </div>
+                        </t>
+
+                        <div class="row mt-5">
+                            <div class="col-4 text-center">
+                                <div style="border-top:1px solid black; padding-top:5px;">Maestro Cervecero</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div style="border-top:1px solid black; padding-top:5px;">Control de Calidad</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div style="border-top:1px solid black; padding-top:5px;">Gerencia</div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

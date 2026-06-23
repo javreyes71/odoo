@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_receta_cerveza" model="ir.actions.report">
+        <field name="name">Ficha de Receta de Cerveza</field>
+        <field name="model">cerveceria.receta</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cerveceria_odoo.report_receta_cerveza_doc</field>
+        <field name="report_file">cerveceria_odoo.report_receta_cerveza_doc</field>
+        <field name="binding_model_id" ref="model_cerveceria_receta"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_receta_cerveza_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="receta">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <h2 class="text-uppercase">Ficha de Receta de Cerveza</h2>
+                                <h3 style="color:#5b4a42;"><t t-esc="receta.name"/></h3>
+                                <span style="background-color:#5b4a42; color:white; font-size:1rem; padding:5px 15px; border-radius:4px;">
+                                    <t t-esc="receta.estilo_cerveza"/>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <table class="table table-sm table-bordered">
+                                    <thead style="background-color:#5b4a42; color:white;">
+                                        <tr><th colspan="2">Información General</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>Código</strong></td><td><t t-esc="receta.codigo"/></td></tr>
+                                        <tr><td><strong>Estilo</strong></td><td><t t-esc="receta.estilo_cerveza"/></td></tr>
+                                        <tr><td><strong>Volumen Base</strong></td><td><t t-esc="receta.volumen_produccion"/> L</td></tr>
+                                        <tr><td><strong>Estado</strong></td><td><t t-esc="receta.estado"/></td></tr>
+                                        <tr><td><strong>Lotes Producidos</strong></td><td><t t-esc="receta.lotes_count"/></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm table-bordered">
+                                    <thead style="background-color:#5b4a42; color:white;">
+                                        <tr><th colspan="2">Parámetros Técnicos</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>Densidad Original (OG)</strong></td><td><t t-esc="receta.densidad_original or '—'"/></td></tr>
+                                        <tr><td><strong>Densidad Final (FG)</strong></td><td><t t-esc="receta.densidad_final or '—'"/></td></tr>
+                                        <tr><td><strong>ABV (%)</strong></td><td><t t-esc="'%.2f' % receta.abv"/>%</td></tr>
+                                        <tr><td><strong>Amargor (IBU)</strong></td><td><t t-esc="receta.ibu or '—'"/></td></tr>
+                                        <tr><td><strong>Color (SRM)</strong></td><td><t t-esc="receta.srm or '—'"/></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <table class="table table-sm table-bordered">
+                                    <thead style="background-color:#5b4a42; color:white;">
+                                        <tr>
+                                            <th>Macerado (min)</th><th>Cocción (min)</th>
+                                            <th>Fermentación (días)</th><th>Madurado (días)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><t t-esc="receta.tiempo_macerado or '—'"/></td>
+                                            <td><t t-esc="receta.tiempo_coccion or '—'"/></td>
+                                            <td><t t-esc="receta.tiempo_fermentacion or '—'"/></td>
+                                            <td><t t-esc="receta.tiempo_madurado or '—'"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <t t-if="receta.ingrediente_ids">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <table class="table table-sm table-bordered">
+                                        <thead style="background-color:#5b4a42; color:white;">
+                                            <tr>
+                                                <th colspan="5">Lista de Ingredientes (Base: <t t-esc="receta.volumen_produccion"/> L)</th>
+                                            </tr>
+                                            <tr>
+                                                <th>#</th><th>Ingrediente</th><th>Tipo</th>
+                                                <th>Cantidad</th><th>Momento de Adición</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="receta.ingrediente_ids" t-as="ing">
+                                                <tr>
+                                                    <td><t t-esc="ing_index + 1"/></td>
+                                                    <td><t t-esc="ing.product_id.name"/></td>
+                                                    <td><t t-esc="ing.tipo_ingrediente"/></td>
+                                                    <td><t t-esc="ing.cantidad"/> <t t-esc="ing.uom_id.name"/></td>
+                                                    <td><t t-esc="ing.momento_adicion or '—'"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="receta.descripcion">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <h5 style="color:#5b4a42;">Descripción</h5>
+                                    <p><t t-esc="receta.descripcion"/></p>
+                                </div>
+                            </div>
+                        </t>
+
+                        <div class="row mt-5">
+                            <div class="col-6 text-center">
+                                <div style="border-top:1px solid black; padding-top:5px;">Maestro Cervecero</div>
+                            </div>
+                            <div class="col-6 text-center">
+                                <div style="border-top:1px solid black; padding-top:5px;">Aprobado por Gerencia</div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

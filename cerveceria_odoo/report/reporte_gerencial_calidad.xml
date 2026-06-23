@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         REPORTE GERENCIAL 2: ESTADO DE CALIDAD POR LOTE
+         Modelo: cerveceria.lote  (con sub-iteración en control_calidad_ids)
+         Tipo: Gerencial (múltiples lotes, t-foreach anidado en controles)
+    ════════════════════════════════════════════════════════════════ -->
+
+    <!-- Acción del reporte -->
+    <record id="action_reporte_gerencial_calidad" model="ir.actions.report">
+        <field name="name">Reporte Gerencial de Calidad</field>
+        <field name="model">cerveceria.lote</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cerveceria_odoo.reporte_gerencial_calidad</field>
+        <field name="report_file">cerveceria_odoo.reporte_gerencial_calidad</field>
+        <field name="binding_model_id" ref="cerveceria_odoo.model_cerveceria_lote"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Reporte_Gerencial_Calidad'</field>
+    </record>
+
+    <!-- Template QWeb -->
+    <template id="reporte_gerencial_calidad">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+
+                    <!-- ── Encabezado ── -->
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <h2 style="color:#5c3317; border-bottom: 3px solid #2a9d8f; padding-bottom:8px;">
+                                🔬 Reporte Gerencial de Control de Calidad
+                            </h2>
+                            <p class="text-muted">
+                                Fecha de emisión:
+                                <strong>
+                                    <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                                </strong>
+                                &#160;|&#160; Empresa:
+                                <strong>
+                                    <t t-esc="res_company.name"/>
+                                </strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ── Estadísticas globales de calidad ── -->
+                    <t t-set="todos_lotes" t-value="docs"/>
+                    <t t-set="todos_controles" t-value="docs.mapped('control_calidad_ids')"/>
+                    <t t-set="ctrl_aprobados" t-value="todos_controles.filtered(lambda c: c.resultado_general == 'aprobado')"/>
+                    <t t-set="ctrl_rechazados" t-value="todos_controles.filtered(lambda c: c.resultado_general == 'rechazado')"/>
+                    <t t-set="ctrl_condicionados" t-value="todos_controles.filtered(lambda c: c.resultado_general == 'aprobado_condicionado')"/>
+                    <t t-set="ctrl_pendientes" t-value="todos_controles.filtered(lambda c: c.resultado_general == 'pendiente')"/>
+                    <t t-set="ctrl_con_accion" t-value="todos_controles.filtered(lambda c: c.requiere_accion)"/>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4 style="color:#5c3317;">Resumen Global de Calidad</h4>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col text-center">
+                            <div style="background:#264653; color:white; border-radius:8px; padding:10px;">
+                                <div style="font-size:24px; font-weight:bold;"><t t-esc="len(todos_controles)"/></div>
+                                <div style="font-size:11px;">Total Controles</div>
+                            </div>
+                        </div>
+                        <div class="col text-center">
+                            <div style="background:#2a9d8f; color:white; border-radius:8px; padding:10px;">
+                                <div style="font-size:24px; font-weight:bold;"><t t-esc="len(ctrl_aprobados)"/></div>
+                                <div style="font-size:11px;">Aprobados</div>
+                            </div>
+                        </div>
+                        <div class="col text-center">
+                            <div style="background:#e9c46a; color:#333; border-radius:8px; padding:10px;">
+                                <div style="font-size:24px; font-weight:bold;"><t t-esc="len(ctrl_condicionados)"/></div>
+                                <div style="font-size:11px;">Aprobados c/ cond.</div>
+                            </div>
+                        </div>
+                        <div class="col text-center">
+                            <div style="background:#e76f51; color:white; border-radius:8px; padding:10px;">
+                                <div style="font-size:24px; font-weight:bold;"><t t-esc="len(ctrl_rechazados)"/></div>
+                                <div style="font-size:11px;">Rechazados</div>
+                            </div>
+                        </div>
+                        <div class="col text-center">
+                            <div style="background:#6c757d; color:white; border-radius:8px; padding:10px;">
+                                <div style="font-size:24px; font-weight:bold;"><t t-esc="len(ctrl_pendientes)"/></div>
+                                <div style="font-size:11px;">Pendientes</div>
+                            </div>
+                        </div>
+                        <div class="col text-center">
+                            <div style="background:#c62828; color:white; border-radius:8px; padding:10px;">
+                                <div style="font-size:24px; font-weight:bold;"><t t-esc="len(ctrl_con_accion)"/></div>
+                                <div style="font-size:11px;">Requieren Acción</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tasa de aprobación -->
+                    <t t-if="len(todos_controles) > 0">
+                        <t t-set="tasa_aprobacion" t-value="round((len(ctrl_aprobados) + len(ctrl_condicionados)) / len(todos_controles) * 100, 1)"/>
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <table class="table table-sm table-bordered">
+                                    <thead style="background:#5c3317; color:white;">
+                                        <tr>
+                                            <th colspan="2" class="text-center">Indicadores de Calidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Lotes analizados</td>
+                                            <td class="text-right"><strong><t t-esc="len(todos_lotes)"/></strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total controles realizados</td>
+                                            <td class="text-right"><strong><t t-esc="len(todos_controles)"/></strong></td>
+                                        </tr>
+                                        <tr style="background:#e8f8f5;">
+                                            <td><strong>Tasa de aprobación global</strong></td>
+                                            <td class="text-right">
+                                                <strong style="color:#2a9d8f;">
+                                                    <t t-esc="tasa_aprobacion"/> %
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                        <tr style="background:#fff3e0;">
+                                            <td><strong>Controles con acción correctiva</strong></td>
+                                            <td class="text-right">
+                                                <strong style="color:#e76f51;">
+                                                    <t t-esc="len(ctrl_con_accion)"/>
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- ── Detalle por lote ── -->
+                    <h4 style="color:#5c3317; margin-top:8px;">Detalle de Controles por Lote</h4>
+
+                    <t t-foreach="todos_lotes" t-as="lote">
+
+                        <!-- Encabezado del lote -->
+                        <div class="mb-2" style="page-break-inside: avoid;">
+                            <div style="background:#264653; color:white; padding:8px 12px; border-radius:4px 4px 0 0;">
+                                <strong>Lote: <t t-esc="lote.name"/></strong>
+                                &#160;|&#160; Receta: <t t-esc="lote.receta_id.name or 'N/A'"/>
+                                &#160;|&#160; Estilo:
+                                <t t-set="estilo_map" t-value="{'lager':'Lager','ale':'Ale','ipa':'IPA','stout':'Stout','porter':'Porter','wheat':'Trigo','sour':'Ácida','saison':'Saison','pilsner':'Pilsner','otro':'Otro'}"/>
+                                <t t-esc="estilo_map.get(lote.estilo_cerveza, lote.estilo_cerveza or 'N/A')"/>
+                                &#160;|&#160; Maestro: <t t-esc="lote.responsable_id.name or 'N/A'"/>
+                            </div>
+
+                            <!-- Sub-resumen del lote -->
+                            <t t-set="controles_lote" t-value="lote.control_calidad_ids"/>
+                            <t t-set="aprobados_lote" t-value="controles_lote.filtered(lambda c: c.resultado_general == 'aprobado')"/>
+                            <t t-set="rechazados_lote" t-value="controles_lote.filtered(lambda c: c.resultado_general == 'rechazado')"/>
+
+                            <div style="background:#f8f9fa; border:1px solid #dee2e6; border-top:none; padding:6px 12px; font-size:11px;">
+                                <strong>Estado del lote:</strong>
+                                <t t-set="estado_map" t-value="{'planificado':'Planificado','en_proceso':'En Proceso','fermentando':'Fermentando','madurando':'Madurando','envasado':'Envasado','liberado':'Liberado','cancelado':'Cancelado'}"/>
+                                <t t-esc="estado_map.get(lote.estado, lote.estado)"/>
+                                &#160;·&#160;
+                                <strong>Total controles:</strong> <t t-esc="len(controles_lote)"/>
+                                &#160;·&#160;
+                                <strong style="color:#2a9d8f;">Aprobados: <t t-esc="len(aprobados_lote)"/></strong>
+                                &#160;·&#160;
+                                <strong style="color:#e76f51;">Rechazados: <t t-esc="len(rechazados_lote)"/></strong>
+                                &#160;·&#160;
+                                <strong>ABV Real:</strong>
+                                <t t-if="lote.abv_real > 0"><t t-esc="'%.2f' % lote.abv_real"/> %</t>
+                                <t t-else="">N/A</t>
+                            </div>
+
+                            <!-- Tabla de controles del lote -->
+                            <t t-if="controles_lote">
+                                <table class="table table-sm table-striped table-bordered" style="font-size:10px; margin-top:0;">
+                                    <thead style="background:#5c3317; color:white;">
+                                        <tr>
+                                            <th>Etapa</th>
+                                            <th>Fecha</th>
+                                            <th>Responsable</th>
+                                            <th class="text-center">Temp. (°C)</th>
+                                            <th class="text-center">Temp. OK</th>
+                                            <th class="text-center">pH</th>
+                                            <th class="text-center">pH OK</th>
+                                            <th class="text-center">Densidad</th>
+                                            <th class="text-center">ABV Est. %</th>
+                                            <th class="text-center">Resultado</th>
+                                            <th class="text-center">Acción Req.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="controles_lote" t-as="ctrl">
+                                            <tr>
+                                                <!-- Etapa -->
+                                                <td>
+                                                    <t t-set="etapa_map" t-value="{
+                                                        'pre_macerado':'Pre-Macerado',
+                                                        'macerado':'Macerado',
+                                                        'post_macerado':'Post-Macerado',
+                                                        'coccion':'Cocción',
+                                                        'post_coccion':'Post-Cocción',
+                                                        'inoculacion':'Inoculación',
+                                                        'fermentacion_inicial':'Ferm. Inicial',
+                                                        'fermentacion_activa':'Ferm. Activa',
+                                                        'fermentacion_final':'Ferm. Final',
+                                                        'madurado':'Madurado',
+                                                        'pre_envasado':'Pre-Envasado',
+                                                        'post_envasado':'Post-Envasado',
+                                                        'producto_terminado':'Prod. Terminado'
+                                                    }"/>
+                                                    <t t-esc="etapa_map.get(ctrl.etapa_control, ctrl.etapa_control)"/>
+                                                </td>
+                                                <!-- Fecha -->
+                                                <td>
+                                                    <t t-if="ctrl.fecha_control">
+                                                        <t t-esc="context_timestamp(ctrl.fecha_control).strftime('%d/%m/%Y %H:%M')"/>
+                                                    </t>
+                                                </td>
+                                                <!-- Responsable -->
+                                                <td><t t-esc="ctrl.responsable_id.name or '-'"/></td>
+                                                <!-- Temperatura -->
+                                                <td class="text-center">
+                                                    <t t-if="ctrl.temperatura">
+                                                        <t t-esc="'%.1f' % ctrl.temperatura"/>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                                <!-- Temp OK -->
+                                                <td class="text-center">
+                                                    <t t-if="ctrl.temperatura">
+                                                        <span t-att-style="'font-weight:bold; color:' + ('#2a9d8f' if ctrl.temperatura_ok else '#e76f51')">
+                                                            <t t-if="ctrl.temperatura_ok">✓</t>
+                                                            <t t-else="">✗</t>
+                                                        </span>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                                <!-- pH -->
+                                                <td class="text-center">
+                                                    <t t-if="ctrl.ph">
+                                                        <t t-esc="'%.2f' % ctrl.ph"/>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                                <!-- pH OK -->
+                                                <td class="text-center">
+                                                    <t t-if="ctrl.ph">
+                                                        <span t-att-style="'font-weight:bold; color:' + ('#2a9d8f' if ctrl.ph_ok else '#e76f51')">
+                                                            <t t-if="ctrl.ph_ok">✓</t>
+                                                            <t t-else="">✗</t>
+                                                        </span>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                                <!-- Densidad -->
+                                                <td class="text-center">
+                                                    <t t-if="ctrl.densidad">
+                                                        <t t-esc="'%.3f' % ctrl.densidad"/>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                                <!-- ABV estimado -->
+                                                <td class="text-center">
+                                                    <t t-if="ctrl.abv_estimado">
+                                                        <t t-esc="'%.2f' % ctrl.abv_estimado"/>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                                <!-- Resultado general -->
+                                                <td class="text-center">
+                                                    <t t-set="res_map" t-value="{
+                                                        'aprobado': ('Aprobado', '#2a9d8f'),
+                                                        'aprobado_condicionado': ('Apro. Cond.', '#e9c46a'),
+                                                        'rechazado': ('Rechazado', '#e76f51'),
+                                                        'pendiente': ('Pendiente', '#6c757d')
+                                                    }"/>
+                                                    <t t-set="res_info" t-value="res_map.get(ctrl.resultado_general, ('?', '#999'))"/>
+                                                    <span t-att-style="'color:white; background:' + res_info[1] + '; padding:1px 5px; border-radius:3px; font-size:9px;'">
+                                                        <t t-esc="res_info[0]"/>
+                                                    </span>
+                                                </td>
+                                                <!-- Acción correctiva requerida -->
+                                                <td class="text-center">
+                                                    <t t-if="ctrl.requiere_accion">
+                                                        <span style="color:#e76f51; font-weight:bold; font-size:12px;">⚠</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span style="color:#2a9d8f;">–</span>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                            <!-- Fila de acción correctiva si existe -->
+                                            <t t-if="ctrl.accion_correctiva">
+                                                <tr style="background:#fff3cd;">
+                                                    <td colspan="11" style="font-size:9px; padding:3px 8px;">
+                                                        <strong>⚠ Acción correctiva:</strong>
+                                                        <t t-esc="ctrl.accion_correctiva"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- Sin controles registrados -->
+                            <t t-if="not controles_lote">
+                                <div style="border:1px solid #dee2e6; border-top:none; padding:8px 12px; font-size:11px; color:#999; font-style:italic;">
+                                    Sin controles de calidad registrados para este lote.
+                                </div>
+                            </t>
+                        </div>
+
+                    </t>
+
+                    <!-- ── Leyenda ── -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div style="border:1px solid #dee2e6; border-radius:4px; padding:8px 12px; font-size:10px; background:#f8f9fa;">
+                                <strong>Leyenda:</strong>
+                                <span style="color:#2a9d8f; margin-left:8px;">✓ Parámetro dentro de rango</span>
+                                <span style="color:#e76f51; margin-left:8px;">✗ Parámetro fuera de rango</span>
+                                <span style="color:#e76f51; margin-left:8px;">⚠ Requiere acción correctiva</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Pie ── -->
+                    <div class="row mt-3">
+                        <div class="col-12 text-center text-muted" style="font-size:10px; border-top:1px solid #ddd; padding-top:8px;">
+                            Cervecería Odoo · Reporte Gerencial de Control de Calidad · Generado automáticamente
+                        </div>
+                    </div>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

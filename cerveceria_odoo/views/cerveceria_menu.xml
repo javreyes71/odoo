@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MENÚ PRINCIPAL
+    ══════════════════════════════════════════════════════════════ -->
+    <menuitem
+        id="menu_cerveceria_root"
+        name="Cervecería"
+        sequence="50"
+        web_icon="cerveceria_odoo,static/description/icon.png"
+        groups="cerveceria_odoo.group_cerveceria_user"/>
+
+    <!-- ─── Producción ────────────────────────────────────────────── -->
+    <menuitem
+        id="menu_cerveceria_produccion"
+        name="Producción"
+        parent="menu_cerveceria_root"
+        sequence="10"/>
+
+    <menuitem
+        id="menu_recetas"
+        name="Recetas de Cerveza"
+        parent="menu_cerveceria_produccion"
+        action="action_receta_cerveza"
+        sequence="10"/>
+
+    <menuitem
+        id="menu_lotes"
+        name="Lotes de Producción"
+        parent="menu_cerveceria_produccion"
+        action="action_lote_produccion"
+        sequence="20"/>
+
+    <!-- ─── Calidad ───────────────────────────────────────────────── -->
+    <menuitem
+        id="menu_cerveceria_calidad"
+        name="Calidad"
+        parent="menu_cerveceria_root"
+        sequence="20"/>
+
+    <menuitem
+        id="menu_control_calidad"
+        name="Control de Calidad"
+        parent="menu_cerveceria_calidad"
+        action="action_control_calidad"
+        sequence="10"/>
+
+    <menuitem
+        id="menu_trazabilidad"
+        name="Trazabilidad de Insumos"
+        parent="menu_cerveceria_calidad"
+        action="action_trazabilidad_insumos"
+        sequence="20"/>
+
+    <!-- ─── Reportes ──────────────────────────────────────────────── -->
+    <menuitem
+        id="menu_cerveceria_reportes"
+        name="Reportes"
+        parent="menu_cerveceria_root"
+        sequence="30"
+        groups="cerveceria_odoo.group_cerveceria_manager"/>
+
+    <menuitem
+        id="menu_reporte_trazabilidad_pivot"
+        name="Análisis de Insumos (Pivot)"
+        parent="menu_cerveceria_reportes"
+        action="action_trazabilidad_insumos"
+        sequence="10"/>
+
+    <menuitem
+        id="menu_reporte_calidad_graph"
+        name="Calidad por Etapa (Gráfico)"
+        parent="menu_cerveceria_reportes"
+        action="action_control_calidad"
+        sequence="20"/>
+
+    <!-- ─── Configuración ─────────────────────────────────────────── -->
+    <menuitem
+        id="menu_cerveceria_config"
+        name="Configuración"
+        parent="menu_cerveceria_root"
+        sequence="99"
+        groups="cerveceria_odoo.group_cerveceria_manager"/>
+
+</odoo>

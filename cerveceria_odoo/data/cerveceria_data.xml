@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SECUENCIAS AUTOMÁTICAS
+    ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Secuencia para Recetas: REC-0001, REC-0002 ... -->
+    <record id="seq_receta_cerveza" model="ir.sequence">
+        <field name="name">Secuencia Receta Cerveza</field>
+        <field name="code">cerveceria.receta</field>
+        <field name="prefix">REC-</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Secuencia para Lotes: LOTE-2025-0001 ... -->
+    <record id="seq_lote_produccion" model="ir.sequence">
+        <field name="name">Secuencia Lote de Producción</field>
+        <field name="code">cerveceria.lote</field>
+        <field name="prefix">LOTE-%(year)s-</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         HERENCIA 1: product.template
+         Inyecta pestaña "Cervecería" en la ficha de producto
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_product_template_cerveceria" model="ir.ui.view">
+        <field name="name">product.template.cerveceria.form</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+
+            <!-- XPath 1: Agrega pestaña nueva "Cervecería" al notebook del producto -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Cervecería" name="cerveceria">
+                    <group>
+                        <group string="Clasificación Cervecera">
+                            <field name="es_insumo_cervecero" widget="boolean_toggle"/>
+                            <field name="tipo_insumo_cervecero"
+                                   invisible="not es_insumo_cervecero"/>
+                            <field name="origen_insumo"
+                                   invisible="not es_insumo_cervecero"/>
+                        </group>
+                        <group string="Parámetros Técnicos">
+                            <field name="alpha_acidos"
+                                   invisible="tipo_insumo_cervecero != 'lupulo'"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+            <!-- XPath 2: Agrega badge "Insumo Cervecero" junto al nombre del producto -->
+            <xpath expr="//div[hasclass('oe_title')]" position="after">
+                <div invisible="not es_insumo_cervecero" class="alert alert-info py-1 px-2 mb-2" style="font-size:0.85rem;">
+                    🍺 Insumo Cervecero —
+                    <field name="tipo_insumo_cervecero" readonly="1" nolabel="1"/>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Vista lista de productos: agrega columna es_insumo_cervecero -->
+    <record id="view_product_template_cerveceria_list" model="ir.ui.view">
+        <field name="name">product.template.cerveceria.list</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <!-- XPath 3: Agrega columna al final de la lista de productos -->
+            <xpath expr="//list" position="inside">
+                <field name="es_insumo_cervecero" optional="show" string="Insumo Cerv."/>
+                <field name="tipo_insumo_cervecero" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         HERENCIA 2: sale.order
+         Inyecta campos cerveceros en el pedido de venta
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_sale_order_cerveceria" model="ir.ui.view">
+        <field name="name">sale.order.cerveceria.form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- XPath 4: Agrega pestaña cervecería en el pedido de venta -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Cervecería" name="cerveceria_venta">
+                    <group>
+                        <group string="Lote Asociado">
+                            <field name="lote_cervecero_id"/>
+                            <field name="estilo_cerveza_venta" readonly="1"/>
+                        </group>
+                        <group string="Notas">
+                            <field name="notas_cerveceria" nolabel="1"
+                                   placeholder="Notas sobre el lote o producto para el cliente..."/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         HERENCIA 3: purchase.order
+         Inyecta campos de destino cervecero en la orden de compra
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_purchase_order_cerveceria" model="ir.ui.view">
+        <field name="name">purchase.order.cerveceria.form</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- XPath 5: Agrega sección cervecería debajo del campo de fecha -->
+            <xpath expr="//sheet" position="inside">
+                <group string="Destino Cervecería" name="cerveceria_compra">
+                    <field name="receta_destino_id"/>
+                    <field name="lote_destino_id"/>
+                    <field name="es_compra_cerveceria" readonly="1" widget="boolean_toggle"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         HERENCIA 4: mrp.production (Fabricación)
+         Inyecta campos cerveceros en la Orden de Fabricación
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_mrp_production_cerveceria" model="ir.ui.view">
+        <field name="name">mrp.production.cerveceria.form</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+
+            <!-- XPath 6: Agrega sección Cervecería bajo el campo product_id -->
+            <xpath expr="//field[@name='product_id']" position="after">
+                <group string="Cervecería" name="cerveceria_mrp" colspan="2">
+                    <field name="receta_cerveza_id"/>
+                    <field name="lote_cervecero_id"/>
+                    <field name="estilo_cerveza" readonly="1"/>
+                    <field name="abv_objetivo" readonly="1"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

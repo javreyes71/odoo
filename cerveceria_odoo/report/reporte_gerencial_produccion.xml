@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         REPORTE GERENCIAL 1: RESUMEN DE PRODUCCIÓN POR ESTILO
+         Modelo: cerveceria.lote
+         Tipo: Gerencial (múltiples registros, agrupados por estilo)
+    ════════════════════════════════════════════════════════════════ -->
+
+    <!-- Acción del reporte -->
+    <record id="action_reporte_gerencial_produccion_lote" model="ir.actions.report">
+        <field name="name">Reporte Gerencial de Producción</field>
+        <field name="model">cerveceria.lote</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cerveceria_odoo.reporte_gerencial_produccion</field>
+        <field name="report_file">cerveceria_odoo.reporte_gerencial_produccion</field>
+        <field name="binding_model_id" ref="cerveceria_odoo.model_cerveceria_lote"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Reporte_Gerencial_Produccion'</field>
+    </record>
+
+    <!-- Template QWeb -->
+    <template id="reporte_gerencial_produccion">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+
+                    <!-- ── Encabezado ── -->
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <h2 style="color:#5c3317; border-bottom: 3px solid #f4a261; padding-bottom:8px;">
+                                🍺 Reporte Gerencial de Producción Cervecera
+                            </h2>
+                            <p class="text-muted">
+                                Fecha de emisión:
+                                <strong>
+                                    <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                                </strong>
+                                &#160;|&#160; Empresa:
+                                <strong>
+                                    <t t-esc="res_company.name"/>
+                                </strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ── Resumen ejecutivo ── -->
+                    <t t-set="todos_lotes" t-value="docs"/>
+                    <t t-set="total_lotes" t-value="len(todos_lotes)"/>
+                    <t t-set="lotes_liberados" t-value="todos_lotes.filtered(lambda l: l.estado == 'liberado')"/>
+                    <t t-set="lotes_en_proceso" t-value="todos_lotes.filtered(lambda l: l.estado in ('en_proceso','fermentando','madurando'))"/>
+                    <t t-set="lotes_cancelados" t-value="todos_lotes.filtered(lambda l: l.estado == 'cancelado')"/>
+                    <t t-set="vol_total_real" t-value="sum(todos_lotes.mapped('volumen_real'))"/>
+                    <t t-set="vol_total_plan" t-value="sum(todos_lotes.mapped('volumen_planificado'))"/>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4 style="color:#5c3317;">Resumen Ejecutivo</h4>
+                        </div>
+                        <div class="col-3 text-center">
+                            <div style="background:#f4a261; color:white; border-radius:8px; padding:12px;">
+                                <div style="font-size:28px; font-weight:bold;"><t t-esc="total_lotes"/></div>
+                                <div>Total de Lotes</div>
+                            </div>
+                        </div>
+                        <div class="col-3 text-center">
+                            <div style="background:#2a9d8f; color:white; border-radius:8px; padding:12px;">
+                                <div style="font-size:28px; font-weight:bold;"><t t-esc="len(lotes_liberados)"/></div>
+                                <div>Liberados</div>
+                            </div>
+                        </div>
+                        <div class="col-3 text-center">
+                            <div style="background:#e9c46a; color:#333; border-radius:8px; padding:12px;">
+                                <div style="font-size:28px; font-weight:bold;"><t t-esc="len(lotes_en_proceso)"/></div>
+                                <div>En Proceso</div>
+                            </div>
+                        </div>
+                        <div class="col-3 text-center">
+                            <div style="background:#e76f51; color:white; border-radius:8px; padding:12px;">
+                                <div style="font-size:28px; font-weight:bold;"><t t-esc="len(lotes_cancelados)"/></div>
+                                <div>Cancelados</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Volumen total -->
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <table class="table table-sm table-bordered">
+                                <thead style="background:#5c3317; color:white;">
+                                    <tr>
+                                        <th colspan="2" class="text-center">Volumen de Producción (Litros)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Planificado</strong></td>
+                                        <td class="text-right">
+                                            <t t-esc="'%.2f' % vol_total_plan"/> L
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Real Obtenido</strong></td>
+                                        <td class="text-right">
+                                            <t t-esc="'%.2f' % vol_total_real"/> L
+                                        </td>
+                                    </tr>
+                                    <tr style="background:#fef3e2;">
+                                        <td><strong>Rendimiento Global</strong></td>
+                                        <td class="text-right">
+                                            <strong>
+                                                <t t-if="vol_total_plan > 0">
+                                                    <t t-esc="'%.1f' % (vol_total_real / vol_total_plan * 100)"/> %
+                                                </t>
+                                                <t t-else="">N/A</t>
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ── Detalle por estilo de cerveza ── -->
+                    <h4 style="color:#5c3317; margin-top:16px;">Producción por Estilo de Cerveza</h4>
+
+                    <t t-set="estilos" t-value="list(set(todos_lotes.mapped('estilo_cerveza')))"/>
+
+                    <t t-foreach="estilos" t-as="estilo">
+                        <t t-set="lotes_estilo" t-value="todos_lotes.filtered(lambda l: l.estilo_cerveza == estilo)"/>
+                        <t t-set="nombre_estilo" t-value="dict(lotes_estilo[0].fields_get(['estilo_cerveza'])['estilo_cerveza']['selection']).get(estilo, estilo) if lotes_estilo else estilo"/>
+
+                        <div class="mb-3">
+                            <h5 style="background:#f4a261; color:white; padding:6px 12px; border-radius:4px;">
+                                <t t-esc="nombre_estilo"/> —
+                                <small><t t-esc="len(lotes_estilo)"/> lote(s)</small>
+                            </h5>
+
+                            <table class="table table-sm table-striped table-bordered">
+                                <thead style="background:#5c3317; color:white; font-size:11px;">
+                                    <tr>
+                                        <th>Nº Lote</th>
+                                        <th>Receta</th>
+                                        <th>Maestro Cervecero</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Fecha Fin Real</th>
+                                        <th>Estado</th>
+                                        <th class="text-right">Vol. Plan. (L)</th>
+                                        <th class="text-right">Vol. Real (L)</th>
+                                        <th class="text-right">Rend. (%)</th>
+                                        <th class="text-right">ABV Real (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="font-size:11px;">
+                                    <t t-foreach="lotes_estilo" t-as="lote">
+                                        <tr>
+                                            <td><strong><t t-esc="lote.name"/></strong></td>
+                                            <td><t t-esc="lote.receta_id.name or '-'"/></td>
+                                            <td><t t-esc="lote.responsable_id.name or '-'"/></td>
+                                            <td>
+                                                <t t-if="lote.fecha_inicio">
+                                                    <t t-esc="lote.fecha_inicio.strftime('%d/%m/%Y')"/>
+                                                </t>
+                                                <t t-else="">-</t>
+                                            </td>
+                                            <td>
+                                                <t t-if="lote.fecha_fin_real">
+                                                    <t t-esc="lote.fecha_fin_real.strftime('%d/%m/%Y')"/>
+                                                </t>
+                                                <t t-else="">-</t>
+                                            </td>
+                                            <td>
+                                                <t t-set="estado_map" t-value="{'planificado':'Planificado','en_proceso':'En Proceso','fermentando':'Fermentando','madurando':'Madurando','envasado':'Envasado','liberado':'Liberado','cancelado':'Cancelado'}"/>
+                                                <span t-att-style="
+                                                    'color:white; padding:2px 6px; border-radius:3px; font-size:10px; background:' + (
+                                                        '#2a9d8f' if lote.estado == 'liberado' else
+                                                        '#e9c46a' if lote.estado in ('en_proceso','fermentando','madurando','envasado') else
+                                                        '#e76f51' if lote.estado == 'cancelado' else '#6c757d'
+                                                    )">
+                                                    <t t-esc="estado_map.get(lote.estado, lote.estado)"/>
+                                                </span>
+                                            </td>
+                                            <td class="text-right"><t t-esc="'%.2f' % lote.volumen_planificado"/></td>
+                                            <td class="text-right"><t t-esc="'%.2f' % lote.volumen_real"/></td>
+                                            <td class="text-right">
+                                                <t t-if="lote.rendimiento > 0">
+                                                    <t t-esc="'%.1f' % lote.rendimiento"/> %
+                                                </t>
+                                                <t t-else="">-</t>
+                                            </td>
+                                            <td class="text-right">
+                                                <t t-if="lote.abv_real > 0">
+                                                    <t t-esc="'%.2f' % lote.abv_real"/> %
+                                                </t>
+                                                <t t-else="">-</t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot style="background:#fef3e2; font-size:11px; font-weight:bold;">
+                                    <tr>
+                                        <td colspan="6" class="text-right">Subtotales:</td>
+                                        <td class="text-right">
+                                            <t t-esc="'%.2f' % sum(lotes_estilo.mapped('volumen_planificado'))"/> L
+                                        </td>
+                                        <td class="text-right">
+                                            <t t-esc="'%.2f' % sum(lotes_estilo.mapped('volumen_real'))"/> L
+                                        </td>
+                                        <td class="text-right">
+                                            <t t-set="rend_e" t-value="sum(lotes_estilo.mapped('volumen_real'))"/>
+                                            <t t-set="plan_e" t-value="sum(lotes_estilo.mapped('volumen_planificado'))"/>
+                                            <t t-if="plan_e > 0">
+                                                <t t-esc="'%.1f' % (rend_e / plan_e * 100)"/> %
+                                            </t>
+                                            <t t-else="">-</t>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </t>
+
+                    <!-- ── Pie de página del contenido ── -->
+                    <div class="row mt-4">
+                        <div class="col-12 text-center text-muted" style="font-size:10px; border-top:1px solid #ddd; padding-top:8px;">
+                            Cervecería Odoo · Reporte Gerencial de Producción · Generado automáticamente
+                        </div>
+                    </div>
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

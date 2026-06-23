@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CONTROL CALIDAD - FORM VIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_control_calidad_form" model="ir.ui.view">
+        <field name="name">cerveceria.control.calidad.form</field>
+        <field name="model">cerveceria.control.calidad</field>
+        <field name="arch" type="xml">
+            <form string="Control de Calidad">
+                <header>
+                    <button name="action_aprobar" string="Aprobar" type="object"
+                            class="btn-success"
+                            invisible="resultado_general == 'aprobado'"/>
+                    <button name="action_aprobar_condicionado" string="Aprobar con Condiciones" type="object"
+                            invisible="resultado_general == 'aprobado_condicionado'"/>
+                    <button name="action_rechazar" string="Rechazar" type="object"
+                            class="btn-danger"
+                            invisible="resultado_general == 'rechazado'"/>
+                    <field name="resultado_general" widget="statusbar"
+                           statusbar_visible="pendiente,aprobado_condicionado,aprobado,rechazado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <!-- Alerta si requiere acción correctiva -->
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not requiere_accion">
+                        <strong>⚠ Requiere acción correctiva.</strong>
+                        Uno o más parámetros están fuera de rango.
+                    </div>
+                    <group>
+                        <group string="Lote y Etapa">
+                            <field name="lote_id"/>
+                            <field name="receta_id" readonly="1"/>
+                            <field name="etapa_control"/>
+                            <field name="fecha_control"/>
+                            <field name="responsable_id"/>
+                        </group>
+                        <group string="Resultado">
+                            <field name="resultado_general" widget="badge"
+                                   decoration-success="resultado_general == 'aprobado'"
+                                   decoration-warning="resultado_general == 'aprobado_condicionado'"
+                                   decoration-danger="resultado_general == 'rechazado'"
+                                   decoration-info="resultado_general == 'pendiente'"/>
+                            <field name="requiere_accion" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Parámetros Físico-Químicos -->
+                        <page string="Temperatura y pH" name="temp_ph">
+                            <group>
+                                <group string="Temperatura (°C)">
+                                    <field name="temperatura"/>
+                                    <field name="temperatura_min"/>
+                                    <field name="temperatura_max"/>
+                                    <field name="temperatura_ok" readonly="1" widget="boolean_toggle"/>
+                                </group>
+                                <group string="pH">
+                                    <field name="ph"/>
+                                    <field name="ph_min"/>
+                                    <field name="ph_max"/>
+                                    <field name="ph_ok" readonly="1" widget="boolean_toggle"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Densidad y Alcohol -->
+                        <page string="Densidad y ABV" name="densidad">
+                            <group>
+                                <group>
+                                    <field name="densidad"/>
+                                    <field name="densidad_esperada"/>
+                                    <field name="abv_estimado"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Sensorial y Otros -->
+                        <page string="Análisis Sensorial" name="sensorial">
+                            <group>
+                                <group>
+                                    <field name="turbidez"/>
+                                    <field name="color_visual"/>
+                                    <field name="carbonatacion"/>
+                                    <field name="oxigeno_disuelto"/>
+                                    <field name="celulas_levadura"/>
+                                </group>
+                            </group>
+                            <group string="Aroma">
+                                <field name="aroma" nolabel="1" placeholder="Descripción del aroma..."/>
+                            </group>
+                            <group string="Sabor">
+                                <field name="sabor" nolabel="1" placeholder="Descripción del sabor..."/>
+                            </group>
+                        </page>
+
+                        <!-- Observaciones y Acciones -->
+                        <page string="Observaciones y Acciones" name="obs">
+                            <group string="Observaciones Técnicas">
+                                <field name="observaciones" nolabel="1"
+                                       placeholder="Observaciones técnicas del control..."/>
+                            </group>
+                            <group string="Acción Correctiva">
+                                <field name="accion_correctiva" nolabel="1"
+                                       placeholder="Describe la acción correctiva a tomar..."/>
+                            </group>
+                        </page>
+
+                        <!-- Herencias -->
+                        <page string="Fabricación (Herencia)" name="mrp">
+                            <group>
+                                <field name="mrp_production_id" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CONTROL CALIDAD - LIST VIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_control_calidad_list" model="ir.ui.view">
+        <field name="name">cerveceria.control.calidad.list</field>
+        <field name="model">cerveceria.control.calidad</field>
+        <field name="arch" type="xml">
+            <list string="Controles de Calidad"
+                  decoration-danger="resultado_general == 'rechazado'"
+                  decoration-success="resultado_general == 'aprobado'"
+                  decoration-warning="resultado_general == 'aprobado_condicionado' or requiere_accion">
+                <field name="fecha_control"/>
+                <field name="lote_id"/>
+                <field name="receta_id"/>
+                <field name="etapa_control"/>
+                <field name="responsable_id"/>
+                <field name="temperatura"/>
+                <field name="temperatura_ok" widget="boolean_toggle"/>
+                <field name="ph"/>
+                <field name="ph_ok" widget="boolean_toggle"/>
+                <field name="densidad"/>
+                <field name="abv_estimado"/>
+                <field name="resultado_general" widget="badge"
+                       decoration-success="resultado_general == 'aprobado'"
+                       decoration-warning="resultado_general == 'aprobado_condicionado'"
+                       decoration-danger="resultado_general == 'rechazado'"
+                       decoration-info="resultado_general == 'pendiente'"/>
+                <field name="requiere_accion"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CONTROL CALIDAD - SEARCH VIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_control_calidad_search" model="ir.ui.view">
+        <field name="name">cerveceria.control.calidad.search</field>
+        <field name="model">cerveceria.control.calidad</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Controles de Calidad">
+                <field name="lote_id" string="Lote"/>
+                <field name="responsable_id" string="Responsable"/>
+                <filter string="Aprobados" name="aprobados" domain="[('resultado_general','=','aprobado')]"/>
+                <filter string="Rechazados" name="rechazados" domain="[('resultado_general','=','rechazado')]"/>
+                <filter string="Pendientes" name="pendientes" domain="[('resultado_general','=','pendiente')]"/>
+                <filter string="Requieren Acción" name="req_accion" domain="[('requiere_accion','=',True)]"/>
+                <separator/>
+                <filter string="Temperatura Fuera de Rango" name="temp_ko"
+                        domain="[('temperatura_ok','=',False)]"/>
+                <filter string="pH Fuera de Rango" name="ph_ko"
+                        domain="[('ph_ok','=',False)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Lote" name="by_lote" context="{'group_by':'lote_id'}"/>
+                    <filter string="Etapa" name="by_etapa" context="{'group_by':'etapa_control'}"/>
+                    <filter string="Resultado" name="by_resultado" context="{'group_by':'resultado_general'}"/>
+                    <filter string="Responsable" name="by_resp" context="{'group_by':'responsable_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CONTROL CALIDAD - GRAPH VIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_control_calidad_graph" model="ir.ui.view">
+        <field name="name">cerveceria.control.calidad.graph</field>
+        <field name="model">cerveceria.control.calidad</field>
+        <field name="arch" type="xml">
+            <graph string="Análisis Control de Calidad" type="bar">
+                <field name="etapa_control" type="row"/>
+                <field name="resultado_general" type="col"/>
+                <field name="lote_id" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_control_calidad" model="ir.actions.act_window">
+        <field name="name">Control de Calidad</field>
+        <field name="res_model">cerveceria.control.calidad</field>
+        <field name="view_mode">list,form,graph</field>
+        <field name="search_view_id" ref="view_control_calidad_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra los controles de calidad de tus lotes.
+            </p>
+        </field>
+    </record>
+
+</odoo>

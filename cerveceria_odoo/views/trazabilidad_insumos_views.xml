@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TRAZABILIDAD INSUMOS - FORM VIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_trazabilidad_form" model="ir.ui.view">
+        <field name="name">cerveceria.trazabilidad.form</field>
+        <field name="model">cerveceria.trazabilidad</field>
+        <field name="arch" type="xml">
+            <form string="Trazabilidad de Insumo">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Lote y Etapa">
+                            <field name="lote_id"/>
+                            <field name="receta_id" readonly="1"/>
+                            <field name="etapa_uso"/>
+                            <field name="fecha_uso"/>
+                        </group>
+                        <group string="Insumo">
+                            <field name="product_id"/>
+                            <field name="tipo_insumo"/>
+                            <field name="cantidad_usada"/>
+                            <field name="uom_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Comparación con Receta">
+                            <field name="cantidad_planificada" readonly="1"/>
+                            <field name="desviacion" readonly="1"
+                                   decoration-danger="desviacion > 10 or desviacion &lt; -10"
+                                   decoration-warning="desviacion > 5 or desviacion &lt; -5"/>
+                            <field name="conforme"/>
+                        </group>
+                        <group string="Costos">
+                            <field name="costo_unitario"/>
+                            <field name="costo_total" readonly="1"/>
+                            <field name="currency_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Trazabilidad Inventario" name="inventario">
+                            <group>
+                                <field name="stock_lot_insumo_id"/>
+                                <field name="ubicacion_origen_id"/>
+                                <field name="stock_move_id"/>
+                            </group>
+                        </page>
+                        <page string="Trazabilidad Compras" name="compras">
+                            <group>
+                                <field name="purchase_order_line_id"/>
+                                <field name="proveedor_id" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Observaciones" name="obs">
+                            <field name="notas" placeholder="Observaciones sobre el insumo..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TRAZABILIDAD INSUMOS - LIST VIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_trazabilidad_list" model="ir.ui.view">
+        <field name="name">cerveceria.trazabilidad.list</field>
+        <field name="model">cerveceria.trazabilidad</field>
+        <field name="arch" type="xml">
+            <list string="Trazabilidad de Insumos"
+                  decoration-danger="not conforme">
+                <field name="fecha_uso"/>
+                <field name="lote_id"/>
+                <field name="receta_id"/>
+                <field name="product_id"/>
+                <field name="tipo_insumo"/>
+                <field name="etapa_uso"/>
+                <field name="cantidad_usada"/>
+                <field name="uom_id"/>
+                <field name="cantidad_planificada"/>
+                <field name="desviacion" decoration-danger="desviacion &gt; 10 or desviacion &lt; -10"/>
+                <field name="costo_total" sum="Total"/>
+                <field name="proveedor_id"/>
+                <field name="conforme" widget="toggle_button"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TRAZABILIDAD INSUMOS - SEARCH VIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_trazabilidad_search" model="ir.ui.view">
+        <field name="name">cerveceria.trazabilidad.search</field>
+        <field name="model">cerveceria.trazabilidad</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Trazabilidad">
+                <field name="lote_id" string="Lote"/>
+                <field name="product_id" string="Insumo"/>
+                <field name="proveedor_id" string="Proveedor"/>
+                <filter string="No Conformes" name="no_conformes" domain="[('conforme','=',False)]"/>
+                <filter string="Con Desviación Alta" name="desviacion_alta"
+                        domain="['|',('desviacion','&gt;',10),('desviacion','&lt;',-10)]"/>
+                <separator/>
+                <filter string="Maltas" name="maltas" domain="[('tipo_insumo','=','malta')]"/>
+                <filter string="Lúpulos" name="lupulos" domain="[('tipo_insumo','=','lupulo')]"/>
+                <filter string="Levaduras" name="levaduras" domain="[('tipo_insumo','=','levadura')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Lote" name="by_lote" context="{'group_by':'lote_id'}"/>
+                    <filter string="Tipo de Insumo" name="by_tipo" context="{'group_by':'tipo_insumo'}"/>
+                    <filter string="Etapa" name="by_etapa" context="{'group_by':'etapa_uso'}"/>
+                    <filter string="Proveedor" name="by_proveedor" context="{'group_by':'proveedor_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TRAZABILIDAD - PIVOT VIEW
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="view_trazabilidad_pivot" model="ir.ui.view">
+        <field name="name">cerveceria.trazabilidad.pivot</field>
+        <field name="model">cerveceria.trazabilidad</field>
+        <field name="arch" type="xml">
+            <pivot string="Análisis de Insumos">
+                <field name="lote_id" type="row"/>
+                <field name="tipo_insumo" type="col"/>
+                <field name="costo_total" type="measure"/>
+                <field name="cantidad_usada" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_trazabilidad_insumos" model="ir.actions.act_window">
+        <field name="name">Trazabilidad de Insumos</field>
+        <field name="res_model">cerveceria.trazabilidad</field>
+        <field name="view_mode">list,form,pivot</field>
+        <field name="search_view_id" ref="view_trazabilidad_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra los insumos utilizados en cada lote.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         CATEGORÍA
+    ══════════════════════════════════════════════════════════════ -->
+    <record id="module_category_cerveceria" model="ir.module.category">
+        <field name="name">Cervecería</field>
+        <field name="description">Módulo de gestión cervecera artesanal</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         GRUPOS
+    ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Usuario básico: ve y registra -->
+    <record id="group_cerveceria_user" model="res.groups">
+        <field name="name">Usuario Cervecería</field>
+        <field name="category_id" ref="module_category_cerveceria"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Maestro cervecero: gestiona lotes y calidad -->
+    <record id="group_cerveceria_brewer" model="res.groups">
+        <field name="name">Maestro Cervecero</field>
+        <field name="category_id" ref="module_category_cerveceria"/>
+        <field name="implied_ids" eval="[(4, ref('group_cerveceria_user'))]"/>
+    </record>
+
+    <!-- Manager: acceso total incluyendo configuración -->
+    <record id="group_cerveceria_manager" model="res.groups">
+        <field name="name">Gerente Cervecería</field>
+        <field name="category_id" ref="module_category_cerveceria"/>
+        <field name="implied_ids" eval="[(4, ref('group_cerveceria_brewer'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+
+</odoo>
