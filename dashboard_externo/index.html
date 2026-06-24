@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analítico ERP — Cervecería</title>
+    <meta name="description" content="Dashboard analítico independiente de producción cervecera conectado a Odoo ERP via API REST.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            background: linear-gradient(135deg, #1a1f2e 0%, #252d3d 100%);
+            border-bottom: 1px solid #2d3748;
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .header-left h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f7c948;
+            letter-spacing: -0.3px;
+        }
+        .header-left p {
+            font-size: 0.78rem;
+            color: #718096;
+            margin-top: 2px;
+        }
+        .api-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(72, 187, 120, 0.12);
+            border: 1px solid rgba(72, 187, 120, 0.3);
+            color: #68d391;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .api-badge::before {
+            content: '';
+            width: 7px; height: 7px;
+            background: #68d391;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ── MAIN ── */
+        .main {
+            padding: 28px 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ── CONTROLES ── */
+        .controles {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+        .controles label {
+            font-size: 0.82rem;
+            color: #a0aec0;
+            font-weight: 500;
+        }
+        #filtro-carrera {
+            background: #1a1f2e;
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            min-width: 220px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        #filtro-carrera:focus { outline: none; border-color: #f7c948; }
+
+        #btn-exportar {
+            margin-left: auto;
+            background: linear-gradient(135deg, #f7c948, #e8a500);
+            color: #1a1209;
+            border: none;
+            padding: 9px 22px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        #btn-exportar:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        /* ── KPI CARDS ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .kpi-card {
+            background: #1a1f2e;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            padding: 20px 20px 16px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-2px); border-color: #4a5568; }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .kpi-card.amarillo::before { background: linear-gradient(90deg, #f7c948, #e8a500); }
+        .kpi-card.verde::before   { background: linear-gradient(90deg, #68d391, #38a169); }
+        .kpi-card.azul::before    { background: linear-gradient(90deg, #63b3ed, #3182ce); }
+        .kpi-card.rojo::before    { background: linear-gradient(90deg, #fc8181, #e53e3e); }
+
+        .kpi-label {
+            font-size: 0.72rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 600;
+        }
+        .kpi-valor {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f7fafc;
+            margin: 6px 0 2px;
+            line-height: 1;
+        }
+        .kpi-sub {
+            font-size: 0.72rem;
+            color: #718096;
+        }
+
+        /* ── GRÁFICOS ── */
+        .graficos-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) { .graficos-grid { grid-template-columns: 1fr; } }
+
+        .chart-card {
+            background: #1a1f2e;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .chart-card h3 {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #a0aec0;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .chart-card canvas { max-height: 280px; }
+
+        /* ── FOOTER ── */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.72rem;
+            color: #4a5568;
+            border-top: 1px solid #1a1f2e;
+            margin-top: 28px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="panel-principal">
+
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <h1>🍺 Dashboard de Producción Cervecera</h1>
+                <p>Monitoreo de lotes, rendimiento y stock en bodega</p>
+            </div>
+            <span class="api-badge">Conexión Activa</span>
+        </div>
+
+        <div class="main">
+
+            <!-- CONTROLES -->
+            <div class="controles">
+                <label for="filtro-carrera">Receta:</label>
+                <select id="filtro-carrera">
+                    <option value="">Cargando...</option>
+                </select>
+                <label for="filtro-mes">Mes:</label>
+                <select id="filtro-mes">
+                    <option value="">Todos los Meses</option>
+                </select>
+                <button id="btn-exportar">⬇ Exportar a PDF</button>
+            </div>
+
+            <!-- KPI CARDS -->
+            <div class="kpi-grid">
+                <div class="kpi-card amarillo">
+                    <div class="kpi-label">Total Litros Producidos</div>
+                    <div class="kpi-valor" id="kpi-litros">—</div>
+                    <div class="kpi-sub">en lotes visibles</div>
+                </div>
+                <div class="kpi-card verde">
+                    <div class="kpi-label">Lotes Activos</div>
+                    <div class="kpi-valor" id="kpi-lotes">—</div>
+                    <div class="kpi-sub">en el período</div>
+                </div>
+                <div class="kpi-card azul">
+                    <div class="kpi-label">Litros Vendidos / Producidos</div>
+                    <div class="kpi-valor" id="kpi-rendimiento">—</div>
+                    <div class="kpi-sub">% tasa de despacho</div>
+                </div>
+                <div class="kpi-card rojo">
+                    <div class="kpi-label">Stock en Bodega</div>
+                    <div class="kpi-valor" id="kpi-abv">—</div>
+                    <div class="kpi-sub">litros disponibles</div>
+                </div>
+            </div>
+
+            <!-- GRÁFICOS -->
+            <div class="graficos-grid">
+                <div class="chart-card">
+                    <h3>📦 Litros por Batch (filtrado por receta)</h3>
+                    <canvas id="graficoUno"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>📈 Tendencia Mensual de Producción</h3>
+                    <canvas id="graficoDos"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            Dashboard de Control de Producción
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+
+</body>
+</html>

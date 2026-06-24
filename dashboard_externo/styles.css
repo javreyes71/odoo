@@ -1,0 +1,67 @@
+ body { 
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    padding: 20px; 
+    background-color: #FFFAF3;
+    box-sizing: border-box;
+}
+
+.dashboard-container { 
+    width: 80%;
+    height: 100vh;
+    display: flex;
+    color: rgb(72, 62, 56);
+}
+
+.dashboard-content {
+    width: 100%;
+    padding: 6% 6%;
+    border-radius: 30px;
+}
+
+.controles { 
+    display: flex; 
+    justify-content: space-between;
+    margin-bottom: 8%; 
+}
+
+.graficos { 
+    display: flex; 
+    gap: 4%;
+    width: 100%; 
+}
+
+div:has(> canvas) {
+    width: 50%;
+    display: flex;
+}
+
+canvas {
+    width: 100%;
+}
+
+
+#btn-exportar {
+    border: none;
+    font-weight: bold;
+    color: white;
+    font-size: 15px;
+    background-color: #fcb751;
+    width: 150px;
+    height: 50px;
+    cursor: pointer;
+}
+
+#filtro-carrera {
+    border: 2px solid #fcb751;
+    width: 24%;
+    font-size: 15px;
+    padding-inline: 10px;
+    border-radius: 10px;
+    background-color: #f9e6ca;
+    outline: none;
+    cursor: pointer;
+}
